@@ -1,0 +1,30 @@
+spring:
+  application:
+    name: telpo-server
+
+  threads:
+    virtual:
+      enabled: true
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/telpo
+    username: ${DB_USERNAME:telpo}
+    password: ${DB_PASSWORD:telpo}
+
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        format_sql: true
+
+server:
+  port: 8080
+
+kakao:
+  rest-api-key: ${KAKAO_REST_API_KEY:}
+
+logging:
+  level:
+    com.telpo.server: debug
