@@ -35,3 +35,14 @@ out/
 
 ### VS Code ###
 .vscode/
+
+### Secrets / local env (카카오 REST 키, DB 계정 등 — 절대 커밋 금지) ###
+.env
+.env.*
+!.env.example
+application-local.yml
+application-local.yaml
+application-secret*.yml
+application-secret*.yaml
+*.pem
+*.key
