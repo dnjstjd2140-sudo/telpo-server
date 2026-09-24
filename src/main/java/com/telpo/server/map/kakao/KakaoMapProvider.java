@@ -29,9 +29,9 @@ public class KakaoMapProvider implements MapProvider {
     private final RestClient restClient;
     private final KakaoProperties properties;
 
-    public KakaoMapProvider(RestClient.Builder restClientBuilder, KakaoProperties properties) {
+    public KakaoMapProvider(KakaoProperties properties) {
         this.properties = properties;
-        this.restClient = restClientBuilder
+        this.restClient = RestClient.builder()
                 .defaultHeader("Authorization", "KakaoAK " + properties.restApiKey())
                 .build();
     }
