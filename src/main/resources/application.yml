@@ -2,6 +2,9 @@ spring:
   application:
     name: telpo-server
 
+  config:
+    import: optional:file:.env[.properties]
+
   threads:
     virtual:
       enabled: true
@@ -24,6 +27,9 @@ server:
 
 kakao:
   rest-api-key: ${KAKAO_REST_API_KEY:}
+
+tmap:
+  app-key: ${TMAP_APP_KEY:}
 
 logging:
   level:
