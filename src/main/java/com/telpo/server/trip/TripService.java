@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.telpo.server.common.exception.NotFoundException;
+import com.telpo.server.map.TravelMode;
 import com.telpo.server.place.Place;
 import com.telpo.server.place.PlaceService;
 import com.telpo.server.place.dto.PlaceSearchResult;
@@ -84,6 +85,7 @@ public class TripService {
                     place,
                     stopRequest.dayNo(),
                     stopRequest.orderNo(),
+                    stopRequest.travelMode() != null ? stopRequest.travelMode() : TravelMode.CAR,
                     stopRequest.memo(),
                     stopRequest.stayMinutes()
             ));
