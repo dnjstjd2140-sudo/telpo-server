@@ -16,6 +16,7 @@ import com.telpo.server.common.LatLng;
 import com.telpo.server.common.exception.NotFoundException;
 import com.telpo.server.map.DistanceMatrix;
 import com.telpo.server.map.Route;
+import com.telpo.server.map.TransitLeg;
 import com.telpo.server.map.RouteProvider;
 import com.telpo.server.map.TravelMode;
 
@@ -95,6 +96,8 @@ public class TmapRouteProvider implements RouteProvider {
         List<LatLng> path = new ArrayList<>();
         long distance = 0;
         long duration = 0;
+        int transitFare = 0;
+        List<TransitLeg> legs = new ArrayList<>();
         for (int i = 0; i < waypoints.size() - 1; i++) {
             Route leg = mode == TravelMode.WALK
                     ? walkRoute(waypoints.get(i), waypoints.get(i + 1))
@@ -102,8 +105,14 @@ public class TmapRouteProvider implements RouteProvider {
             path.addAll(leg.path());
             distance += leg.distanceMeters();
             duration += leg.durationSeconds();
+            transitFare += leg.transitFare() == null ? 0 : leg.transitFare();
+            int offset = path.size() - leg.path().size();
+            for (TransitLeg l : leg.legs()) {
+                legs.add(new TransitLeg(l.mode(), l.name(), l.color(), l.startName(), l.endName(),
+                        l.durationSeconds(), l.pathStart() + offset, l.pathEnd() + offset));
+            }
         }
-        return new Route(path, distance, duration);
+        return new Route(path, distance, duration, null, null, mode == TravelMode.TRANSIT ? transitFare : null, legs);
     }
 
     @Override
@@ -172,7 +181,9 @@ public class TmapRouteProvider implements RouteProvider {
         }
 
         List<LatLng> path = new ArrayList<>();
+        List<TransitLeg> transitLegs = new ArrayList<>();
         for (JsonNode leg : itinerary.path("legs")) {
+            int pathStart = path.size();
             JsonNode passShape = leg.path("passShape").path("linestring");
             if (passShape.isString()) {
                 path.addAll(parseLineString(passShape.asString()));
@@ -182,13 +193,29 @@ public class TmapRouteProvider implements RouteProvider {
                     path.addAll(parseLineString(step.path("linestring").asString("")));
                 }
             }
+            transitLegs.add(new TransitLeg(
+                    leg.path("mode").asString(""),
+                    leg.path("route").asString(""),
+                    leg.path("routeColor").asString(""),
+                    leg.path("start").path("name").asString(""),
+                    leg.path("end").path("name").asString(""),
+                    leg.path("sectionTime").asLong(0),
+                    pathStart,
+                    path.size() - 1));
         }
         if (path.isEmpty()) {
             path.add(from);
             path.add(to);
         }
 
-        return new Route(path, itinerary.path("totalDistance").asLong(0), itinerary.path("totalTime").asLong(0));
+        return new Route(
+                path,
+                itinerary.path("totalDistance").asLong(0),
+                itinerary.path("totalTime").asLong(0),
+                null,
+                null,
+                itinerary.path("fare").path("regular").path("totalFare").asInt(0),
+                transitLegs);
     }
 
     private Map<String, Object> baseBody(LatLng from, LatLng to) {
@@ -236,7 +263,17 @@ public class TmapRouteProvider implements RouteProvider {
         }
 
         JsonNode summary = features.path(0).path("properties");
-        return new Route(path, summary.path("totalDistance").asLong(0), summary.path("totalTime").asLong(0));
+        // 자동차 응답의 첫 feature에는 통행료(totalFare)와 택시 예상 요금(taxiFare)이 같이 온다. 보행자 응답에는 없다.
+        Integer taxiFare = summary.has("taxiFare") ? summary.path("taxiFare").asInt(0) : null;
+        Integer tollFare = summary.has("totalFare") ? summary.path("totalFare").asInt(0) : null;
+        return new Route(
+                path,
+                summary.path("totalDistance").asLong(0),
+                summary.path("totalTime").asLong(0),
+                taxiFare,
+                tollFare,
+                null,
+                List.of());
     }
 
     /** "경도,위도 경도,위도 ..." 형식의 linestring 파싱. */
