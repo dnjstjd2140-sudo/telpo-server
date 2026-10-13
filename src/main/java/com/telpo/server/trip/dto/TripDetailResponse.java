@@ -13,6 +13,7 @@ public record TripDetailResponse(
         LocalDate startDate,
         LocalDate endDate,
         boolean readOnly,
+        String shareToken,
         List<TripStopResponse> stops
 ) {
     public static TripDetailResponse of(Trip trip, List<TripStop> stops, boolean readOnly) {
@@ -23,6 +24,7 @@ public record TripDetailResponse(
                 trip.getStartDate(),
                 trip.getEndDate(),
                 readOnly,
+                trip.getShareToken(),
                 stops.stream().map(TripStopResponse::from).toList()
         );
     }
