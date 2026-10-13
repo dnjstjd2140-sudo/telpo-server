@@ -52,8 +52,8 @@ REST API 키는 서버에만 두고 프론트 코드에는 절대 포함하지 �
 | 메서드 | 경로 | 설명 |
 |---|---|---|
 | `POST` | `/api/trips` | 여행 생성 → `editToken`/`shareToken` 발급 |
-| `GET` | `/api/trips/edit/{editToken}` | 편집용 조회 |
-| `GET` | `/api/trips/share/{shareToken}` | 읽기 전용 조회 |
+| `GET` | `/api/trips/edit/{editToken}` | 편집용 조회 (응답에 공유 링크용 `shareToken` 포함) |
+| `GET` | `/api/trips/share/{shareToken}` | 읽기 전용 조회 (`readOnly: true`). 토큰을 아는 사람은 누구나 조회 가능 |
 | `PUT` | `/api/trips/edit/{editToken}` | 여행 정보/일정 저장 |
 | `GET` | `/api/places/search?q=&lat=&lng=` | 장소 검색 (카카오 로컬 API 호출) |
 | `POST` | `/api/routes` | 경유지 목록 + 이동수단 → 경로(선, 거리, 시간, 택시/통행료/대중교통 요금, 대중교통 구간) |
