@@ -1,0 +1,47 @@
+# 운영 배포용. 서버에서: docker compose -f docker-compose.prod.yml up -d --build
+# telpo-server 와 telpo-client 를 같은 부모 폴더에 clone 해 둘 것.
+services:
+  db:
+    image: postgres:17
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: telpo
+      POSTGRES_USER: ${DB_USERNAME:-telpo}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD 를 .env 에 설정하세요}
+    volumes:
+      - telpo-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-telpo} -d telpo"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  app:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/telpo
+      DB_USERNAME: ${DB_USERNAME:-telpo}
+      DB_PASSWORD: ${DB_PASSWORD}
+      KAKAO_REST_API_KEY: ${KAKAO_REST_API_KEY}
+      TMAP_APP_KEY: ${TMAP_APP_KEY}
+
+  web:
+    build:
+      context: ../telpo-client
+      dockerfile: ../telpo-server/deploy/Dockerfile.web
+      additional_contexts:
+        serverrepo: .
+      args:
+        VITE_KAKAO_JS_KEY: ${VITE_KAKAO_JS_KEY}
+    restart: unless-stopped
+    depends_on:
+      - app
+    ports:
+      - "80:80"
+
+volumes:
+  telpo-db-data:
