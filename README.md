@@ -77,3 +77,33 @@ src/main/java/com/telpo/server/
 - `./gradlew bootRun` — 로컬 실행
 - `./gradlew build` — 빌드 + 테스트
 - `docker compose up -d` — 로컬 PostgreSQL 컨테이너 기동
+
+## 배포 (운영)
+
+운영 서버: Vultr (Ubuntu 24.04), `http://64.176.229.225`. `db`(PostgreSQL) / `app`(이 서버) / `web`(React + nginx)
+세 컨테이너를 `docker-compose.prod.yml` 하나로 올린다. `telpo-server` 와 `telpo-client` 는 **같은 부모 폴더**에
+clone 되어 있어야 한다 (서버에서는 `/opt/telpo/`). 전체 절차·명령어는 `C:\workspace\telpo\배포_가이드.md` 참고.
+
+### 서버 코드를 수정한 뒤 재배포
+
+```bash
+# 1) 내 PC: 수정 → 테스트 → 커밋 → push (main)
+# 2) 운영 서버:
+ssh root@64.176.229.225
+cd /opt/telpo/telpo-server
+git pull
+docker compose -f docker-compose.prod.yml up -d --build app    # app 만 다시 빌드·교체
+docker compose -f docker-compose.prod.yml logs -f app           # 기동 로그 확인 (Ctrl+C 로 종료)
+```
+
+### 자주 쓰는 명령 (서버의 `/opt/telpo/telpo-server` 에서)
+
+```bash
+docker compose -f docker-compose.prod.yml ps               # 상태
+docker compose -f docker-compose.prod.yml restart app      # 서버만 재시작
+docker compose -f docker-compose.prod.yml up -d --build    # 전체 재배포
+```
+
+- 운영 `.env` 는 서버에만 있다 (`DB_USERNAME`, `DB_PASSWORD`, `KAKAO_REST_API_KEY`, `TMAP_APP_KEY`, `VITE_KAKAO_JS_KEY`). git 에 올리지 않는다.
+- `DB_PASSWORD` 는 DB 최초 생성 시 한 번 적용된다. 이후 바꾸면 접속 실패.
+- `docker compose down -v` 는 DB 볼륨까지 삭제하므로 사용 금지.
